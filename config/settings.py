@@ -145,6 +145,7 @@ LOGOUT_REDIRECT_URL = "users:landing"
 
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

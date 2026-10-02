@@ -5,6 +5,7 @@ import re
 from django.conf import settings
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError
 
 from viva.models import Question
 
@@ -34,28 +35,67 @@ def _bounded_context(text):
     return text[:beginning] + marker + text[-ending:]
 
 
-def _client():
+def _make_client():
     if not settings.GOOGLE_API_KEY:
         raise GeminiConfigurationError(
             "Gemini is not configured yet. Add GOOGLE_API_KEY to the server's environment."
         )
-    return genai.Client(api_key=settings.GOOGLE_API_KEY)
+    return genai.Client(
+        api_key=settings.GOOGLE_API_KEY,
+        http_options=types.HttpOptions(
+            timeout=10000,
+            retry_options=types.HttpRetryOptions(attempts=1),
+        ),
+    )
+
+
+def _call_model(model_name, prompt):
+    """Single generate_content call using a managed client."""
+    with _make_client() as client:
+        return client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.35,
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                    disable=True
+                ),
+            ),
+        )
 
 
 def _json_response(prompt):
     try:
-        with _client() as client:
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.35,
-                    automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                        disable=True
-                    ),
-                ),
+        response = _call_model(settings.GEMINI_MODEL, prompt)
+    except ServerError as exc:
+        # Fallback only on temporary capacity errors (HTTP 503)
+        if getattr(exc, "code", None) == 503:
+            logger.warning(
+                "Primary Gemini model %s returned 503, trying fallback %s",
+                settings.GEMINI_MODEL,
+                settings.GEMINI_FALLBACK_MODEL,
             )
+            try:
+                response = _call_model(settings.GEMINI_FALLBACK_MODEL, prompt)
+            except Exception as fallback_exc:
+                logger.exception(
+                    "Gemini fallback request failed: %s: %s",
+                    type(fallback_exc).__name__,
+                    fallback_exc,
+                )
+                raise GeminiServiceError(
+                    "Gemini could not complete this request. Please try again in a moment."
+                ) from fallback_exc
+        else:
+            logger.exception(
+                "Gemini request failed: %s: %s",
+                type(exc).__name__,
+                exc,
+            )
+            raise GeminiServiceError(
+                "Gemini could not complete this request. Please try again in a moment."
+            ) from exc
     except GeminiConfigurationError:
         raise
     except Exception as exc:
