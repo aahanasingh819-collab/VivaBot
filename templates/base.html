@@ -1,0 +1,75 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>{% block title %}VivaBot — your project viva coach{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script defer src="{% static 'js/app.js' %}"></script>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="{% if user.is_authenticated %}{% url 'projects:dashboard' %}{% else %}{% url 'users:landing' %}{% endif %}" aria-label="VivaBot home">
+          <span class="brand-mark" aria-hidden="true"><span>V</span></span>
+          <span class="brand-word">viva<span>bot</span></span>
+        </a>
+        {% if user.is_authenticated %}
+          <nav class="main-nav" aria-label="Main navigation">
+            <a class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'projects:dashboard' %}">Dashboard</a>
+            <a class="{% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'projects:history' %}">History</a>
+          </nav>
+          <div class="header-account">
+            <a class="account-link" href="{% url 'users:profile' %}">
+              <span class="avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
+              <span class="account-name">{{ user.username }}</span>
+            </a>
+            <form method="post" action="{% url 'users:logout' %}">
+              {% csrf_token %}
+              <button class="button button-quiet button-small" type="submit">Log out</button>
+            </form>
+          </div>
+        {% else %}
+          <nav class="public-nav" aria-label="Public navigation">
+            <a href="{% url 'users:login' %}">Log in</a>
+            <a class="button button-primary button-small" href="{% url 'users:register' %}">Get started</a>
+          </nav>
+        {% endif %}
+      </div>
+    </header>
+
+    <main id="main-content">
+      {% if messages %}
+        <div class="message-stack" aria-live="polite">
+          {% for message in messages %}
+            <div class="flash-message flash-{{ message.tags|default:'info' }}">
+              <span>{{ message }}</span>
+              <button type="button" class="dismiss-message" aria-label="Dismiss message">×</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+
+    {% block footer %}
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <a class="brand brand-footer" href="{% url 'users:landing' %}">
+            <span class="brand-mark" aria-hidden="true"><span>V</span></span>
+            <span class="brand-word">viva<span>bot</span></span>
+          </a>
+          <p>Practice with purpose. Walk into your viva prepared.</p>
+          <span class="footer-note">AI feedback is a study aid, not a definitive grade.</span>
+        </div>
+      </footer>
+    {% endblock %}
+  </body>
+</html>

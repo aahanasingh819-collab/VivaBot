@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Create your account — VivaBot{% endblock %}
+{% block content %}
+<section class="auth-page">
+  <div class="auth-aside">
+    <div class="auth-aside-content">
+      <span class="eyebrow eyebrow-light">START WITH YOUR PROJECT</span>
+      <h1>Practice the questions that matter.</h1>
+      <p>Your report is the starting point. Your confidence is the outcome.</p>
+      <div class="auth-steps">
+        <span><b>01</b> Add your project</span>
+        <span><b>02</b> Answer project-specific questions</span>
+        <span><b>03</b> Review and improve</span>
+      </div>
+    </div>
+    <span class="auth-decoration auth-decoration-one"></span>
+    <span class="auth-decoration auth-decoration-two"></span>
+  </div>
+  <div class="auth-main">
+    <div class="auth-card">
+      <span class="eyebrow">CREATE AN ACCOUNT</span>
+      <h2>Your next viva starts here.</h2>
+      <p class="muted">Create an account to save projects and track your practice.</p>
+      <form method="post" class="stack-form">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="field-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="field-help">{{ field.help_text|safe }}</div>{% endif %}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+        {% for error in form.non_field_errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        <button class="button button-primary button-full" type="submit">Create account <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="{% url 'users:login' %}">Log in</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block footer %}{% endblock %}

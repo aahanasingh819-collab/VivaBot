@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Profile — VivaBot{% endblock %}
+{% block content %}
+<section class="page-container content-page narrow-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">YOUR ACCOUNT</span>
+      <h1>Profile</h1>
+      <p>Manage the details connected to your VivaBot account.</p>
+    </div>
+    <a class="button button-outline" href="{% url 'projects:dashboard' %}">Back to dashboard</a>
+  </div>
+  <div class="panel profile-panel">
+    <div class="profile-identity">
+      <span class="avatar avatar-large">{{ user.username|first|upper }}</span>
+      <div><strong>{{ user.username }}</strong><span>Student account</span></div>
+    </div>
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      <div class="field-group">
+        <label for="username">Username</label>
+        <input class="form-control" id="username" value="{{ user.username }}" readonly>
+        <span class="field-help">Your username cannot be changed here.</span>
+      </div>
+      <div class="field-group">
+        <label for="email">Email address</label>
+        <input class="form-control" type="email" id="email" name="email" value="{{ user.email }}" required>
+      </div>
+      <button class="button button-primary" type="submit">Save profile</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

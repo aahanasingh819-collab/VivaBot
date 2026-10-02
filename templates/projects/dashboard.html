@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — VivaBot{% endblock %}
+{% block content %}
+<section class="page-container content-page">
+  <div class="dashboard-welcome">
+    <div>
+      <span class="eyebrow">YOUR PRACTICE SPACE</span>
+      <h1>Prepare for your project viva with AI.</h1>
+      <p>Every question starts with the work you actually built.</p>
+    </div>
+    <a class="button button-primary button-large" href="{% url 'projects:create' %}"><span aria-hidden="true">＋</span> New project</a>
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <span class="stat-icon stat-blue" aria-hidden="true">▣</span>
+      <span class="stat-label">Projects</span>
+      <strong>{{ summary.project_count }}</strong>
+      <span class="stat-foot">Your project reports</span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-icon stat-violet" aria-hidden="true">✓</span>
+      <span class="stat-label">Vivas completed</span>
+      <strong>{{ summary.completed_count }}</strong>
+      <span class="stat-foot">Practice sessions finished</span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-icon stat-mint" aria-hidden="true">↗</span>
+      <span class="stat-label">Average score</span>
+      <strong>{% if summary.average_score != None %}{{ summary.average_score|floatformat:1 }}<small>/10</small>{% else %}<span class="stat-dash">—</span>{% endif %}</strong>
+      <span class="stat-foot">Across completed sessions</span>
+    </article>
+  </div>
+
+  <div class="content-columns">
+    <section class="content-section">
+      <div class="section-title-row">
+        <div><span class="eyebrow">KEEP GOING</span><h2>Recent projects</h2></div>
+        {% if summary.project_count %}<a class="text-link" href="{% url 'projects:create' %}">Add project <span aria-hidden="true">→</span></a>{% endif %}
+      </div>
+      {% if projects %}
+        <div class="project-list">
+          {% for project in projects %}
+            <article class="project-card">
+              <div class="project-card-top">
+                <div class="project-symbol" aria-hidden="true">{{ project.title|first|upper }}</div>
+                <div class="project-card-title">
+                  <a href="{% url 'projects:detail' project_id=project.pk %}">{{ project.title }}</a>
+                  <span>Added {{ project.created_at|date:"M j, Y" }}</span>
+                </div>
+                <span class="project-arrow" aria-hidden="true">↗</span>
+              </div>
+              <p class="project-card-description">{{ project.description|truncatechars:105 }}</p>
+              <div class="tag-row">
+                {% if project.technologies_used %}
+                  <span class="tag">{{ project.technologies_used|truncatechars:50 }}</span>
+                {% else %}
+                  <span class="tag tag-muted">Technologies not listed</span>
+                {% endif %}
+                {% with latest=project.viva_sessions.first %}
+                  {% if latest %}
+                    <span class="tag tag-status status-{{ latest.status }}">{{ latest.get_status_display }}{% if latest.overall_score %} · {{ latest.overall_score|floatformat:1 }}/10{% endif %}</span>
+                  {% endif %}
+                {% endwith %}
+              </div>
+              <div class="project-card-actions">
+                {% with latest=project.viva_sessions.first %}
+                  {% if latest and latest.status != "completed" %}
+                    <a class="button button-primary button-small" href="{% url 'viva:session' session_id=latest.pk %}">Continue viva</a>
+                  {% else %}
+                    <form method="post" action="{% url 'viva:generate' project_id=project.pk %}">
+                      {% csrf_token %}
+                      <button class="button button-primary button-small" type="submit">Start viva</button>
+                    </form>
+                  {% endif %}
+                {% endwith %}
+                <a class="button button-outline button-small" href="{% url 'projects:detail' project_id=project.pk %}">View project</a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-illustration" aria-hidden="true"><span>▤</span><i></i><b></b></div>
+          <h3>Your projects start here.</h3>
+          <p>Add a report so VivaBot can build practice questions around your actual work.</p>
+          <a class="button button-primary" href="{% url 'projects:create' %}">Add your first project <span aria-hidden="true">→</span></a>
+        </div>
+      {% endif %}
+    </section>
+
+    <aside class="content-section recent-section">
+      <div class="section-title-row">
+        <div><span class="eyebrow">YOUR ACTIVITY</span><h2>Recent vivas</h2></div>
+        <a class="text-link" href="{% url 'projects:history' %}">History <span aria-hidden="true">→</span></a>
+      </div>
+      {% if recent_sessions %}
+        <div class="session-list">
+          {% for session in recent_sessions %}
+            <a class="session-row" href="{% if session.status == 'completed' %}{% url 'viva:results' session_id=session.pk %}{% else %}{% url 'viva:session' session_id=session.pk %}{% endif %}">
+              <span class="session-mini-icon" aria-hidden="true">{% if session.status == "completed" %}✓{% else %}↗{% endif %}</span>
+              <span class="session-row-copy">
+                <strong>{{ session.project.title }}</strong>
+                <small>{{ session.created_at|date:"M j, Y" }} · {{ session.get_status_display }}</small>
+              </span>
+              {% if session.overall_score != None %}<span class="session-score">{{ session.overall_score|floatformat:1 }}<small>/10</small></span>{% else %}<span class="session-open" aria-hidden="true">→</span>{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="small-empty">
+          <span class="small-empty-icon" aria-hidden="true">◷</span>
+          <strong>No sessions yet</strong>
+          <p>Generate a viva from one of your projects to begin.</p>
+        </div>
+      {% endif %}
+      <div class="dashboard-tip">
+        <span class="tip-icon" aria-hidden="true">✦</span>
+        <p><strong>A helpful habit</strong>Practice explaining why you chose each technology, not just what it does.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}

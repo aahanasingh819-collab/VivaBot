@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Viva results — {{ session.project.title }}{% endblock %}
+{% block content %}
+<section class="page-container content-page results-page">
+  <div class="breadcrumb"><a href="{% url 'projects:dashboard' %}">Dashboard</a><span aria-hidden="true">/</span><a href="{% url 'projects:detail' project_id=session.project_id %}">{{ session.project.title }}</a><span aria-hidden="true">/</span><span>Results</span></div>
+  <div class="results-hero">
+    <div class="results-summary">
+      <span class="eyebrow">VIVA COMPLETE</span>
+      <h1>You did the work.<br><span>Now see what you know.</span></h1>
+      <p>{{ session.project.title }} · Completed {{ session.completed_at|date:"F j, Y, g:i a" }}</p>
+      <div class="results-actions">
+        <a class="button button-primary" href="{% url 'projects:dashboard' %}">Back to dashboard</a>
+        <a class="button button-outline" href="{% url 'projects:detail' project_id=session.project_id %}">View project</a>
+        <form method="post" action="{% url 'viva:generate' project_id=session.project_id %}">
+          {% csrf_token %}
+          <input type="hidden" name="difficulty" value="{{ session.difficulty }}">
+          <button class="button button-outline" type="submit">Start another viva</button>
+        </form>
+      </div>
+    </div>
+    <div class="overall-score-card">
+      <span class="score-ring"><strong>{{ session.overall_score|floatformat:1 }}</strong><small>/10</small></span>
+      <span class="score-caption">Overall score</span>
+      <span class="score-percentage">{{ score_percentage }}% of available points</span>
+      <span class="score-complete">{{ session.total_questions }} questions completed</span>
+    </div>
+  </div>
+
+  <div class="results-insights">
+    <article class="insight-card insight-strength">
+      <span class="insight-icon" aria-hidden="true">✦</span>
+      <span class="eyebrow">STRONGEST AREAS</span>
+      <h2>Keep building on these.</h2>
+      {% if strongest_areas %}<ul>{% for item in strongest_areas %}<li><span>{{ item.label }}</span><strong>{{ item.score|floatformat:1 }}/10</strong></li>{% endfor %}</ul>{% else %}<p>Complete more evaluated answers to see your strongest topics.</p>{% endif %}
+    </article>
+    <article class="insight-card insight-growth">
+      <span class="insight-icon" aria-hidden="true">↗</span>
+      <span class="eyebrow">AREAS TO IMPROVE</span>
+      <h2>Give these another look.</h2>
+      {% if growth_areas %}<ul>{% for item in growth_areas %}<li><span>{{ item.label }}</span><strong>{{ item.score|floatformat:1 }}/10</strong></li>{% endfor %}</ul>{% else %}<p>Review the answer-by-answer feedback below to find a useful next step.</p>{% endif %}
+    </article>
+  </div>
+
+  <section class="results-answers">
+    <div class="section-title-row">
+      <div><span class="eyebrow">A QUESTION-BY-QUESTION REVIEW</span><h2>Your answers</h2></div>
+      <span class="session-count">{{ session.total_questions }} questions</span>
+    </div>
+    <div class="result-accordion">
+      {% for question in session.questions.all %}
+        <details class="result-item" {% if forloop.first %}open{% endif %}>
+          <summary>
+            <span class="result-order">{{ question.order|stringformat:"02d" }}</span>
+            <span class="result-question">{{ question.question_text }}<small>{{ question.get_category_display }} · {{ question.get_difficulty_display }}</small></span>
+            {% if question.answer.evaluation %}<span class="result-score">{{ question.answer.evaluation.score|floatformat:1 }}<small>/10</small></span>{% endif %}
+            <span class="details-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="result-detail">
+            {% if question.answer %}
+              <div class="result-detail-block"><span class="answer-label">YOUR ANSWER</span><p>{{ question.answer.answer_text }}</p></div>
+              {% if question.answer.evaluation %}
+                <div class="result-detail-block"><span class="answer-label">AI FEEDBACK</span><p>{{ question.answer.evaluation.feedback }}</p></div>
+                <div class="feedback-columns">
+                  <div class="feedback-list feedback-good"><h3>What you explained well</h3><ul>{% for point in question.answer.evaluation.strengths %}<li>{{ point }}</li>{% empty %}<li>No strengths listed.</li>{% endfor %}</ul></div>
+                  <div class="feedback-list feedback-next"><h3>What was missing</h3><ul>{% for point in question.answer.evaluation.missing_points %}<li>{{ point }}</li>{% empty %}<li>No major gaps listed.</li>{% endfor %}</ul></div>
+                </div>
+                <div class="result-detail-block suggested-answer"><span class="answer-label">SUGGESTED ANSWER</span><p>{{ question.answer.evaluation.suggested_answer }}</p></div>
+              {% endif %}
+            {% else %}
+              <p class="muted">No answer was submitted for this question.</p>
+            {% endif %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+    <p class="ai-disclaimer results-disclaimer">Scores and feedback are AI-generated study guidance, not an official assessment.</p>
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Viva history — VivaBot{% endblock %}
+{% block content %}
+<section class="page-container content-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">YOUR PROGRESS, OVER TIME</span>
+      <h1>Viva history</h1>
+      <p>Pick up an unfinished session or revisit feedback from a completed one.</p>
+    </div>
+    <a class="button button-outline" href="{% url 'projects:dashboard' %}">Back to dashboard</a>
+  </div>
+  {% if sessions %}
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead><tr><th>Project</th><th>Date</th><th>Questions</th><th>Status</th><th>Score</th><th><span class="sr-only">Action</span></th></tr></thead>
+        <tbody>
+          {% for session in sessions %}
+            <tr>
+              <td><a class="history-project" href="{% url 'projects:detail' project_id=session.project_id %}">{{ session.project.title }}</a></td>
+              <td>{{ session.created_at|date:"M j, Y" }}</td>
+              <td>{{ session.total_questions }}</td>
+              <td><span class="tag tag-status status-{{ session.status }}">{{ session.get_status_display }}</span></td>
+              <td>{% if session.overall_score != None %}<strong>{{ session.overall_score|floatformat:1 }}/10</strong>{% else %}<span class="muted">—</span>{% endif %}</td>
+              <td>
+                <a class="table-action" href="{% if session.status == 'completed' %}{% url 'viva:results' session_id=session.pk %}{% else %}{% url 'viva:session' session_id=session.pk %}{% endif %}">
+                  {% if session.status == "completed" %}View result{% else %}Continue{% endif %} <span aria-hidden="true">→</span>
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state history-empty">
+      <div class="empty-illustration" aria-hidden="true"><span>◷</span><i></i><b></b></div>
+      <h3>Your practice history will appear here.</h3>
+      <p>Add a project and start your first viva. Completed and unfinished sessions are saved automatically.</p>
+      <a class="button button-primary" href="{% url 'projects:create' %}">Add a project <span aria-hidden="true">→</span></a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

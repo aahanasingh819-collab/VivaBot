@@ -1,45 +1,54 @@
-# [Project name]
+# VivaBot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+VivaBot helps students practise project vivas with questions grounded in their report and saved feedback for each answer.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `python manage.py check` — validate Django configuration
+- `python manage.py test` — run the web, API, ownership, and mocked-Gemini tests
+- `python manage.py migrate` — apply SQLite migrations
+- `python manage.py collectstatic --noinput` — prepare static files for WhiteNoise
+- Required Replit Secrets: `SESSION_SECRET`, `GOOGLE_API_KEY`
+- Main app: standalone Django workflow on port 8000; API and Canvas workflows belong to the existing artifacts
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Python 3.12, Django, Django REST Framework
+- Server-rendered Django templates with vanilla JavaScript and responsive CSS
+- SQLite for development, with private report files on local storage
+- Google Gemini via the official Google GenAI SDK; credentials remain server-side
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `config/` — Django settings, URL configuration, and WSGI/ASGI entry points
+- `users/` — registration, login, and account/profile views
+- `projects/` — project and report models, upload parsing/validation, owner-scoped pages
+- `viva/` — viva models, Gemini calls, saved evaluations, practice and results views
+- `api/` — DRF serializers, owner permissions, project/viva endpoints, and tests
+- `templates/` and `static/` — responsive HTML, CSS, and progressive-enhancement JavaScript
+- `README.md` — local setup, environment configuration, student workflow, and API reference
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Django's built-in authentication backs both private pages and DRF session authentication.
+- Reports are downloaded through an authenticated owner-checked view; there is no public media route.
+- Gemini receives bounded extracted report context; JSON is validated before questions or evaluations are saved.
+- Viva answer text and its evaluation are committed together, and duplicate submissions reuse the saved evaluation.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Users can create projects with PDF, DOCX, or TXT reports, practise one viva question at a time, review answer-level feedback and final scores, and revisit history. Admin is available at `/admin/`.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+Keep the requested stack: Python, Django, DRF, Django templates, and vanilla JavaScript. Do not replace it with React or Node.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Use Replit Secrets for `GOOGLE_API_KEY` and `SESSION_SECRET`; never expose either in templates or API responses.
+- Gemini-dependent tests mock the provider and must not issue billable live requests.
+- When changing project fields or viva models, create and commit Django migrations.
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See `README.md` for first-time setup and endpoint details.

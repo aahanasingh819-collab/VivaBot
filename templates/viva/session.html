@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Practice viva — {{ session.project.title }}{% endblock %}
+{% block content %}
+<section class="viva-page">
+  <div class="viva-top page-container">
+    <a class="back-link" href="{% url 'projects:detail' project_id=session.project_id %}"><span aria-hidden="true">←</span> Project details</a>
+    <span class="viva-context-label"><span class="live-dot"></span> PRACTICE SESSION</span>
+  </div>
+  <div class="viva-main page-container">
+    <div class="viva-header">
+      <div class="viva-project">
+        <span class="project-symbol project-symbol-small">{{ session.project.title|first|upper }}</span>
+        <span><small>PROJECT</small><strong>{{ session.project.title }}</strong></span>
+      </div>
+      {% if question %}
+        <div class="progress-info">
+          <span>Question <strong>{{ session.current_question_number }}</strong> of {{ session.total_questions }}</span>
+          <span>{{ session.current_question_number|floatformat:0 }}<small>/{{ session.total_questions }}</small></span>
+        </div>
+        <div class="viva-progress" role="progressbar" aria-label="Viva progress" aria-valuemin="0" aria-valuemax="{{ session.total_questions }}" aria-valuenow="{{ session.current_question_number }}">
+          <span style="width:{{ session.current_question_number|add:0 }}0%"></span>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if question %}
+      <article class="question-card">
+        <div class="question-meta">
+          <span class="question-category"><span class="category-mark" aria-hidden="true">✦</span> {{ question.get_category_display }}</span>
+          <span class="difficulty-pill difficulty-{{ question.difficulty }}">{{ question.get_difficulty_display }}</span>
+        </div>
+        <span class="eyebrow question-eyebrow">QUESTION {{ question.order|stringformat:"02d" }}</span>
+        <h1>{{ question.question_text }}</h1>
+        {% if answer %}
+          <div class="submitted-answer">
+            <span class="answer-label">YOUR ANSWER</span>
+            <p>{{ answer.answer_text }}</p>
+          </div>
+          {% if answer.evaluation %}
+            <div class="evaluation-panel">
+              <div class="evaluation-heading">
+                <div><span class="eyebrow">AI-GENERATED EVALUATION</span><h2>Your answer, reviewed.</h2></div>
+                <div class="score-badge"><strong>{{ answer.evaluation.score|floatformat:0 }}</strong><span>/ 10</span></div>
+              </div>
+              <p class="evaluation-feedback">{{ answer.evaluation.feedback }}</p>
+              <div class="feedback-columns">
+                <div class="feedback-list feedback-good">
+                  <h3><span aria-hidden="true">✓</span> What you explained well</h3>
+                  <ul>{% for item in answer.evaluation.strengths %}<li>{{ item }}</li>{% empty %}<li>Review the feedback above for the main takeaway.</li>{% endfor %}</ul>
+                </div>
+                <div class="feedback-list feedback-next">
+                  <h3><span aria-hidden="true">＋</span> What to strengthen</h3>
+                  <ul>{% for item in answer.evaluation.missing_points %}<li>{{ item }}</li>{% empty %}<li>No major gaps were identified for this answer.</li>{% endfor %}</ul>
+                </div>
+              </div>
+              <div class="suggested-answer">
+                <span class="answer-label">A CLEARER SAMPLE ANSWER</span>
+                <p>{{ answer.evaluation.suggested_answer }}</p>
+              </div>
+              <p class="ai-disclaimer">This AI-generated evaluation is a study aid. Use your report and instructor's guidance as the source of truth.</p>
+            </div>
+            <form method="post" action="{% url 'viva:next' session_id=session.pk %}" class="next-question-form">
+              {% csrf_token %}
+              <button class="button button-primary button-large" type="submit">
+                {% if session.current_question_number >= session.total_questions %}Finish viva{% else %}Next question{% endif %}
+                <span aria-hidden="true">→</span>
+              </button>
+            </form>
+          {% else %}
+            <p class="field-error">Your answer is saved, but the evaluation is not available yet. Refresh to retry.</p>
+          {% endif %}
+        {% else %}
+          <p class="question-prompt">Take a moment to think it through. Explain the idea in your own words.</p>
+          <form method="post" action="{% url 'viva:submit_answer' session_id=session.pk question_id=question.pk %}" class="answer-form" data-loading-form data-loading-label="Evaluating your answer...">
+            {% csrf_token %}
+            <div class="field-group">
+              <label class="sr-only" for="answer-text">Your answer</label>
+              <textarea class="answer-textarea" id="answer-text" name="answer_text" rows="8" maxlength="5000" required placeholder="Write your answer here..."></textarea>
+              <div class="textarea-footer"><span>Keep it clear and explain your reasoning.</span><span><b id="answer-count">0</b> / 5,000</span></div>
+            </div>
+            <div class="answer-submit-row">
+              <span class="answer-privacy"><span aria-hidden="true">▣</span> Your answer is saved privately.</span>
+              <div>
+                <div class="loading-state" hidden><span class="spinner"></span><span>Evaluating your answer...</span></div>
+                <button class="button button-primary button-large" type="submit" data-original-label="Submit answer">Submit answer <span aria-hidden="true">→</span></button>
+              </div>
+            </div>
+          </form>
+        {% endif %}
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h2>No questions are available yet.</h2>
+        <p>Return to the project and generate a new viva from the report.</p>
+        <a class="button button-primary" href="{% url 'projects:detail' project_id=session.project_id %}">Back to project</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

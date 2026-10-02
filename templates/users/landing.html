@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}VivaBot — Ace your project viva with AI{% endblock %}
+{% block content %}
+  <section class="landing-hero">
+    <div class="landing-hero-inner page-container">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> Your project. Your questions. Your next step.</div>
+        <h1>Ace your project viva <span>with confidence.</span></h1>
+        <p class="hero-description">Upload your project report. VivaBot builds questions around what you actually made, evaluates your answers, and shows you what to strengthen before the big day.</p>
+        <div class="hero-actions">
+          <a class="button button-primary button-large" href="{% url 'users:register' %}">Start practicing <span aria-hidden="true">→</span></a>
+          <a class="button button-outline button-large" href="{% url 'users:login' %}">Log in</a>
+        </div>
+        <div class="hero-trust">
+          <span class="trust-icon" aria-hidden="true">✓</span>
+          <span>Questions grounded in your own report</span>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="Preview of a viva question based on a student project">
+        <div class="hero-orbit orbit-one"></div>
+        <div class="hero-orbit orbit-two"></div>
+        <div class="preview-card">
+          <div class="preview-topline">
+            <span class="preview-label"><span class="live-dot"></span> PRACTICE SESSION</span>
+            <span class="preview-count">03 <i>/ 10</i></span>
+          </div>
+          <div class="preview-progress"><span></span></div>
+          <div class="preview-project">
+            <span class="project-icon" aria-hidden="true">Q</span>
+            <span><small>PROJECT</small><strong>Campus Queue Manager</strong></span>
+          </div>
+          <div class="preview-question">
+            <span class="question-index">QUESTION 03</span>
+            <p>How does your system prevent two students from being assigned the same queue position?</p>
+          </div>
+          <div class="preview-answer">
+            <span>Start typing your answer...</span>
+            <span class="send-mark" aria-hidden="true">↗</span>
+          </div>
+          <div class="preview-note"><span aria-hidden="true">✦</span> Built from the uploaded project report</div>
+        </div>
+        <div class="hero-stamp"><span>01</span> Project-specific<br>by design</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-pad how-section">
+    <div class="page-container">
+      <div class="section-heading">
+        <span class="eyebrow">THREE STEPS TO READY</span>
+        <h2>Turn what you built into what you know.</h2>
+        <p>Good preparation starts with the project you made, not a generic question bank.</p>
+      </div>
+      <div class="steps-grid">
+        <article class="step-card">
+          <span class="step-number">01</span>
+          <div class="step-icon step-icon-blue" aria-hidden="true">↥</div>
+          <h3>Upload your project</h3>
+          <p>Add a short description and your report. VivaBot reads the parts that matter for a useful viva.</p>
+        </article>
+        <article class="step-card">
+          <span class="step-number">02</span>
+          <div class="step-icon step-icon-violet" aria-hidden="true">?</div>
+          <h3>Practice your viva</h3>
+          <p>Answer one question at a time, with questions tailored to the work in your report.</p>
+        </article>
+        <article class="step-card">
+          <span class="step-number">03</span>
+          <div class="step-icon step-icon-mint" aria-hidden="true">↗</div>
+          <h3>Improve with feedback</h3>
+          <p>Review a score, strengths, missing points, and a clearer sample answer after each response.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-pad features-section">
+    <div class="page-container feature-layout">
+      <div class="feature-intro">
+        <span class="eyebrow">A BETTER KIND OF PRACTICE</span>
+        <h2>Less memorizing.<br><span>More understanding.</span></h2>
+        <p>VivaBot keeps your practice close to your actual project, so you can explain your decisions with clarity.</p>
+        <a class="text-link" href="{% url 'users:register' %}">Build your first project profile <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="features-grid">
+        <article class="feature-card">
+          <span class="feature-icon icon-indigo" aria-hidden="true">⌕</span>
+          <h3>Project-specific questions</h3>
+          <p>Generated from your report and project details, not a generic CS quiz.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon icon-sky" aria-hidden="true">↯</span>
+          <h3>Useful AI evaluation</h3>
+          <p>See what was clear, what was missing, and one way to improve your answer.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon icon-coral" aria-hidden="true">◷</span>
+          <h3>Progress you can revisit</h3>
+          <p>Keep every viva session and score with the project it belongs to.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon icon-mint" aria-hidden="true">▤</span>
+          <h3>Your own history</h3>
+          <p>Come back to completed and in-progress practice whenever you need it.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing-section">
+    <div class="page-container closing-inner">
+      <span class="closing-spark" aria-hidden="true">✦</span>
+      <div>
+        <span class="eyebrow">YOUR WORK DESERVES A CLEAR EXPLANATION</span>
+        <h2>Know your project.<br>Own your viva.</h2>
+      </div>
+      <a class="button button-light button-large" href="{% url 'users:register' %}">Get started free <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+{% endblock %}

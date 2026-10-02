@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — VivaBot{% endblock %}
+{% block content %}
+<section class="page-container content-page narrow-page">
+  <div class="breadcrumb"><a href="{% url 'projects:dashboard' %}">Dashboard</a><span aria-hidden="true">/</span><span>{{ page_title }}</span></div>
+  <div class="form-page-heading">
+    <span class="eyebrow">{% if project %}PROJECT DETAILS{% else %}START WITH YOUR WORK{% endif %}</span>
+    <h1>{{ page_title }}</h1>
+    <p>Share what you built and upload the report. VivaBot uses its content to create relevant viva questions.</p>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="panel project-form" data-loading-form data-loading-label="Saving project...">
+    {% csrf_token %}
+    <div class="field-group">
+      <label for="{{ form.title.id_for_label }}">Project name <span class="required-mark">*</span></label>
+      {{ form.title }}
+      {% for error in form.title.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="{{ form.description.id_for_label }}">Short description <span class="required-mark">*</span></label>
+      {{ form.description }}
+      <span class="field-help">What problem does your project solve, and who is it for?</span>
+      {% for error in form.description.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="{{ form.technologies_used.id_for_label }}">Technologies used</label>
+      {{ form.technologies_used }}
+      <span class="field-help">Separate technologies with commas.</span>
+      {% for error in form.technologies_used.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="field-group">
+      <label for="{{ form.report_file.id_for_label }}">Project report {% if not project %}<span class="required-mark">*</span>{% endif %}</label>
+      <label class="upload-zone" for="{{ form.report_file.id_for_label }}">
+        <span class="upload-icon" aria-hidden="true">↥</span>
+        <span class="upload-copy"><strong id="upload-filename">{% if project %}Replace your report, or keep the current file{% else %}Choose a report to upload{% endif %}</strong><small>PDF, DOCX, or TXT · maximum 10 MB</small></span>
+        <span class="button button-outline button-small">Browse files</span>
+        {{ form.report_file }}
+      </label>
+      {% if project %}<span class="field-help">Current report: <a href="{% url 'projects:download_report' project_id=project.pk %}">{{ project.report_filename }}</a></span>{% endif %}
+      {% for error in form.report_file.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      {% for error in form.non_field_errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    </div>
+    <div class="form-actions">
+      <a class="button button-outline" href="{% if project %}{% url 'projects:detail' project_id=project.pk %}{% else %}{% url 'projects:dashboard' %}{% endif %}">Cancel</a>
+      <button class="button button-primary" type="submit" data-original-label="{{ submit_label }}">{{ submit_label }} <span aria-hidden="true">→</span></button>
+    </div>
+  </form>
+  <p class="privacy-note"><span aria-hidden="true">▣</span> Your report is private to your account and is only used to prepare your practice viva.</p>
+</section>
+{% endblock %}

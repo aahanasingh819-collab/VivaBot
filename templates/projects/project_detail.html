@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} — VivaBot{% endblock %}
+{% block content %}
+<section class="page-container content-page">
+  <div class="breadcrumb"><a href="{% url 'projects:dashboard' %}">Dashboard</a><span aria-hidden="true">/</span><span>{{ project.title }}</span></div>
+  <div class="project-detail-heading">
+    <div class="project-detail-icon" aria-hidden="true">{{ project.title|first|upper }}</div>
+    <div class="project-detail-title">
+      <span class="eyebrow">PROJECT PROFILE</span>
+      <h1>{{ project.title }}</h1>
+      <span class="detail-date">Added {{ project.created_at|date:"F j, Y" }}</span>
+    </div>
+    <div class="project-detail-actions">
+      <a class="button button-outline" href="{% url 'projects:edit' project_id=project.pk %}">Edit project</a>
+      <form method="post" action="{% url 'projects:delete' project_id=project.pk %}" data-confirm="Delete this project, its report, and all associated viva history? This cannot be undone.">
+        {% csrf_token %}
+        <button class="button button-danger-outline" type="submit">Delete</button>
+      </form>
+    </div>
+  </div>
+  <div class="detail-grid">
+    <div class="detail-main">
+      <article class="panel detail-panel">
+        <div class="panel-title"><span class="eyebrow">ABOUT THIS PROJECT</span><span class="small-status status-ready">Report processed</span></div>
+        <p class="detail-description">{{ project.description }}</p>
+        <div class="detail-metadata">
+          <div><span>TECHNOLOGIES</span><strong>{% if project.technologies_used %}{{ project.technologies_used }}{% else %}Not listed{% endif %}</strong></div>
+          <div><span>PROJECT REPORT</span><a class="file-link" href="{% url 'projects:download_report' project_id=project.pk %}"><span aria-hidden="true">▤</span> {{ project.report_filename }} <span aria-hidden="true">↧</span></a></div>
+        </div>
+      </article>
+      <section class="detail-sessions">
+        <div class="section-title-row">
+          <div><span class="eyebrow">PRACTICE RECORD</span><h2>Viva sessions</h2></div>
+          <span class="session-count">{{ sessions|length }} total</span>
+        </div>
+        {% if sessions %}
+          <div class="session-list session-list-panel">
+            {% for session in sessions %}
+              <div class="session-row session-row-static">
+                <span class="session-mini-icon" aria-hidden="true">{% if session.status == "completed" %}✓{% else %}↗{% endif %}</span>
+                <span class="session-row-copy">
+                  <strong>Viva · {{ session.created_at|date:"M j, Y" }}</strong>
+                  <small>{{ session.total_questions }} questions · {{ session.get_status_display }}</small>
+                </span>
+                {% if session.overall_score != None %}<span class="session-score">{{ session.overall_score|floatformat:1 }}<small>/10</small></span>{% endif %}
+                <a class="button button-outline button-small" href="{% if session.status == 'completed' %}{% url 'viva:results' session_id=session.pk %}{% else %}{% url 'viva:session' session_id=session.pk %}{% endif %}">{% if session.status == "completed" %}View results{% else %}Continue{% endif %}</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="small-empty small-empty-inline">
+            <span class="small-empty-icon" aria-hidden="true">◷</span>
+            <strong>No practice sessions yet</strong>
+            <p>Your viva results will be saved here.</p>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+    <aside class="panel generate-panel">
+      <div class="generate-orbit" aria-hidden="true"><span>✦</span></div>
+      <span class="eyebrow">READY WHEN YOU ARE</span>
+      <h2>Practice this project.</h2>
+      <p>Generate questions from the report and answer one at a time. Your previous sessions stay saved.</p>
+      <form method="post" action="{% url 'viva:generate' project_id=project.pk %}" data-loading-form data-loading-label="Analyzing your project...">
+        {% csrf_token %}
+        <label class="field-label" for="difficulty">Question difficulty</label>
+        <select class="form-control difficulty-select" id="difficulty" name="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Balanced</option>
+          <option value="challenging">Challenging</option>
+        </select>
+        <div class="loading-state" hidden><span class="spinner"></span><span>Analyzing your report and preparing questions...</span></div>
+        <button class="button button-primary button-full" type="submit" data-original-label="Generate a new viva">Generate a new viva <span aria-hidden="true">→</span></button>
+      </form>
+      <span class="generate-footnote">Questions are based on your report—not a generic list.</span>
+    </aside>
+  </div>
+</section>
+{% endblock %}
