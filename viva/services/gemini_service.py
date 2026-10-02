@@ -5,7 +5,7 @@ import re
 from django.conf import settings
 from google import genai
 from google.genai import types
-from google.genai.errors import ServerError
+from google.genai.errors import ServerError, ClientError
 
 from viva.models import Question
 
@@ -68,12 +68,14 @@ def _call_model(model_name, prompt):
 def _json_response(prompt):
     try:
         response = _call_model(settings.GEMINI_MODEL, prompt)
-    except ServerError as exc:
-        # Fallback only on temporary capacity errors (HTTP 503)
-        if getattr(exc, "code", None) == 503:
+    except (ServerError, ClientError) as exc:
+        code = getattr(exc, "code", None)
+        # Fallback on temporary capacity errors (503) or quota exhaustion (429)
+        if code in (503, 429):
             logger.warning(
-                "Primary Gemini model %s returned 503, trying fallback %s",
+                "Primary Gemini model %s returned %s, trying fallback %s",
                 settings.GEMINI_MODEL,
+                code,
                 settings.GEMINI_FALLBACK_MODEL,
             )
             try:
