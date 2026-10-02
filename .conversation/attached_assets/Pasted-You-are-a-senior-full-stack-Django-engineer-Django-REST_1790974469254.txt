@@ -1,0 +1,1052 @@
+You are a senior full-stack Django engineer, Django REST Framework architect, UI/UX designer, security-conscious backend developer, and QA engineer.
+
+Build a complete, functional web application called **VivaBot**.
+
+Do NOT create only a frontend mockup. I want a real working application with authentication, database persistence, file uploads, REST APIs, AI integration, viva session management, answer evaluation, history, validation, and a polished student-friendly UI.
+
+## PRODUCT IDEA
+
+VivaBot is an AI-powered platform that helps college students prepare for their project vivas.
+
+The main workflow is:
+
+1. Student creates an account or logs in.
+2. Student creates a project.
+3. Student enters basic project information and uploads their project report.
+4. Backend extracts useful text from the uploaded report.
+5. Google Gemini API analyzes the actual project content.
+6. Gemini generates viva questions specifically about that student's project.
+7. A Viva Session begins.
+8. Questions are shown one at a time.
+9. Student types an answer.
+10. The answer is evaluated by Gemini using the project context and question.
+11. Student receives:
+
+* score
+* feedback
+* strengths
+* missing points
+* suggested/improved answer
+
+12. After completing the viva, the student receives an overall result.
+13. Previous projects and viva sessions remain available in History.
+
+The important idea is:
+
+**VivaBot must NOT generate generic Computer Science viva questions. Questions must be derived from the student's actual uploaded project/report.**
+
+---
+
+# 1. REQUIRED TECHNOLOGY STACK
+
+Use:
+
+* Python
+* Django
+* Django REST Framework
+* Django templates
+* HTML
+* CSS
+* Vanilla JavaScript
+* SQLite during development
+* Google Gemini / Google AI API
+* python-dotenv or an appropriate secure environment-variable approach
+* Git-compatible project structure
+
+Do NOT introduce React, Next.js, Node.js, Firebase, Supabase, MongoDB, WebSockets, Celery, Redis, Docker, Ollama, RocketRide, local LLMs, or unnecessary infrastructure.
+
+Keep this project understandable for a B.Tech CSE student learning Django and DRF.
+
+Use Django's normal ORM rather than unnecessary database abstractions.
+
+---
+
+# 2. PROJECT ARCHITECTURE
+
+Create a clean Django architecture approximately like:
+
+VivaBot/
+manage.py
+requirements.txt
+.gitignore
+.env.example
+README.md
+
+```
+config/
+    settings.py
+    urls.py
+    wsgi.py
+    asgi.py
+
+users/
+    models.py
+    views.py
+    urls.py
+    forms.py
+
+projects/
+    models.py
+    views.py
+    urls.py
+    forms.py
+    services/
+        document_parser.py
+
+viva/
+    models.py
+    views.py
+    urls.py
+    services/
+        gemini_service.py
+        viva_service.py
+
+api/
+    serializers.py
+    views.py
+    urls.py
+    permissions.py
+
+templates/
+static/
+    css/
+    js/
+```
+
+You may adjust this structure where technically justified, but do not create unnecessary Django apps or massive single files.
+
+Business logic should not all be placed inside views.py.
+
+Separate document processing and Gemini integration into service modules.
+
+---
+
+# 3. AUTHENTICATION
+
+Implement proper authentication using Django.
+
+Required:
+
+* Register
+* Login
+* Logout
+* Password validation
+* Logged-in dashboard
+* Protected pages
+* Redirect anonymous users appropriately
+
+Every Project and VivaSession must belong to a User.
+
+A user must NEVER be able to access another user's:
+
+* projects
+* uploaded reports
+* viva sessions
+* questions
+* answers
+* evaluations
+
+Apply this protection both to normal Django views and DRF APIs.
+
+Never trust an object ID alone.
+
+Always verify ownership.
+
+---
+
+# 4. DATABASE MODELS
+
+Design sensible normalized models.
+
+At minimum implement:
+
+## Project
+
+Suggested fields:
+
+* id
+* user ForeignKey
+* title
+* description
+* technologies_used
+* report_file
+* extracted_text
+* created_at
+* updated_at
+
+## VivaSession
+
+Fields such as:
+
+* id
+* project ForeignKey
+* user ForeignKey
+* status
+* difficulty
+* total_questions
+* overall_score
+* started_at
+* completed_at
+* created_at
+
+Possible statuses:
+
+* generated
+* in_progress
+* completed
+
+## Question
+
+Fields:
+
+* viva_session ForeignKey
+* question_text
+* category
+* order
+* difficulty
+* created_at
+
+Possible categories:
+
+* project objective
+* problem statement
+* architecture
+* technology
+* database
+* implementation
+* algorithms
+* testing
+* challenges
+* limitations
+* future improvements
+
+## Answer
+
+Fields:
+
+* question ForeignKey
+* user ForeignKey
+* answer_text
+* submitted_at
+
+## Evaluation
+
+Fields:
+
+* answer OneToOneField
+* score
+* feedback
+* strengths
+* missing_points
+* suggested_answer
+* created_at
+
+Use Django migrations correctly.
+
+Use appropriate related_name values and model ordering where useful.
+
+---
+
+# 5. PROJECT CREATION AND REPORT UPLOAD
+
+Create an attractive "New Project" page.
+
+Fields:
+
+Project Name *
+Short Description *
+Technologies Used
+Project Report *
+
+Initially support:
+
+* PDF
+* TXT
+* DOCX if implementation remains reasonably simple
+
+Maximum file size should be validated.
+
+Reject unsupported file types gracefully.
+
+Never execute uploaded content.
+
+Store uploads using Django's normal media file handling.
+
+Extract text on the backend.
+
+For PDFs, use a reliable Python PDF text extraction library.
+
+For DOCX, use a standard Python DOCX extraction library.
+
+TXT can be read directly.
+
+If extraction fails, show the student a useful error instead of crashing.
+
+Store extracted text in the Project record so the document does not have to be parsed repeatedly.
+
+For extremely long reports, safely limit/chunk the text sent to Gemini instead of blindly sending an unlimited document.
+
+Do not build an unnecessarily complicated document-processing pipeline.
+
+---
+
+# 6. GOOGLE GEMINI INTEGRATION
+
+Create one dedicated service such as:
+
+viva/services/gemini_service.py
+
+Do not scatter AI API calls across views.
+
+Use the currently supported official Google Gemini / Google GenAI Python SDK.
+
+The key must come from an environment variable such as:
+
+GOOGLE_API_KEY
+
+Optionally support:
+
+GEMINI_MODEL
+
+Never expose the API key to frontend JavaScript.
+
+Never hardcode the real key.
+
+Create:
+
+.env.example
+
+containing placeholders only.
+
+Make sure:
+
+.env
+
+is inside .gitignore.
+
+If GOOGLE_API_KEY is missing, display a developer-friendly configuration error rather than crashing mysteriously.
+
+---
+
+# 7. QUESTION GENERATION
+
+When a student clicks:
+
+**Generate Viva**
+
+send project information and extracted report content to Gemini.
+
+The prompt sent internally to Gemini should tell it to act as a college viva examiner.
+
+Generate approximately 8–12 questions.
+
+Questions must cover a good mix of:
+
+* project objective
+* problem being solved
+* target users
+* technologies used
+* reason technologies were selected
+* system architecture
+* frontend/backend communication
+* API design
+* database/database schema
+* important implementation decisions
+* algorithms or important logic
+* authentication/security
+* testing
+* errors/challenges
+* scalability
+* limitations
+* future improvements
+
+Only ask areas that make sense for that particular project.
+
+Do not invent project features that are not supported by the uploaded report.
+
+Questions should include a mixture of:
+
+* easy
+* medium
+* challenging
+
+Use structured JSON output from Gemini if possible.
+
+Validate AI responses before saving them.
+
+Do not assume an AI response is always correctly formatted.
+
+If parsing fails, handle it gracefully and allow regeneration.
+
+Save generated questions permanently in the database.
+
+Refreshing the browser must NOT generate a completely new viva automatically.
+
+---
+
+# 8. VIVA SESSION EXPERIENCE
+
+The Viva Session page is the core part of the application.
+
+Make it visually excellent.
+
+Display:
+
+VivaBot logo/name
+
+Project name
+
+Progress:
+Question 3 of 10
+
+Progress bar
+
+Question category
+
+Question difficulty
+
+Current question
+
+Large answer textarea
+
+Submit Answer button
+
+Do NOT display all questions at once.
+
+Show one question at a time.
+
+After submitting an answer:
+
+1. Send answer + question + relevant project context to the backend.
+2. Backend sends them to Gemini.
+3. Gemini evaluates the answer.
+4. Save Answer.
+5. Save Evaluation.
+6. Show evaluation.
+7. Student presses "Next Question".
+
+Prevent accidental duplicate submissions.
+
+Previously answered questions should remain stored even after refresh.
+
+---
+
+# 9. ANSWER EVALUATION
+
+Ask Gemini to evaluate the answer using criteria such as:
+
+* correctness
+* relevance
+* completeness
+* technical understanding
+* clarity
+
+Use a score from:
+
+0–10
+
+Gemini should return structured data such as:
+
+{
+"score": 8,
+"feedback": "...",
+"strengths": ["...", "..."],
+"missing_points": ["...", "..."],
+"suggested_answer": "..."
+}
+
+Validate this response before storing it.
+
+The evaluation UI should display:
+
+Score: 8/10
+
+Feedback
+
+What you explained well
+
+What you missed
+
+A better answer
+
+Do not insult students or produce unnecessarily harsh feedback.
+
+Feedback should be concise, technical, useful, and specific.
+
+Do not blindly claim the AI evaluation is objectively correct.
+
+Label it clearly as AI-generated evaluation.
+
+---
+
+# 10. FINAL RESULTS
+
+After the final question, show a Results page.
+
+Display:
+
+* Project name
+* Number of questions
+* Overall score
+* percentage if useful
+* completed date/time
+* strongest areas
+* areas to improve
+
+Then show every question in expandable cards containing:
+
+Question
+
+Student Answer
+
+Score
+
+Feedback
+
+Missing Points
+
+Suggested Answer
+
+Calculate overall score from stored question evaluations.
+
+Include buttons:
+
+* Back to Dashboard
+* View Project
+* Start Another Viva
+
+Do not regenerate or overwrite the completed viva.
+
+A student should be able to start another separate VivaSession for the same Project.
+
+---
+
+# 11. DASHBOARD
+
+The logged-in Dashboard should look like a real SaaS/student product.
+
+Header:
+
+VivaBot logo/name
+
+Dashboard
+Projects
+History
+Profile or username
+Logout
+
+Main section:
+
+"Prepare for your project viva with AI"
+
+Primary CTA:
+
+* New Project
+
+Show summary cards:
+
+Projects
+Vivas Completed
+Average Score
+
+Then:
+
+Recent Projects
+
+Each Project card should show:
+
+* title
+* technologies
+* created date
+* latest viva result if available
+* Start Viva / Continue Viva
+* View Project
+
+Then:
+
+Recent Viva Sessions
+
+Show:
+
+Project
+Status
+Score
+Date
+View Results / Continue
+
+Add useful empty states when a new student has no projects.
+
+---
+
+# 12. PROJECT DETAIL PAGE
+
+Create a Project Detail page containing:
+
+Project title
+
+Description
+
+Technologies
+
+Uploaded report filename
+
+Creation date
+
+Previous viva sessions
+
+Buttons:
+
+Generate New Viva
+Edit Project
+Delete Project
+
+Do not expose the raw full extracted report text in an ugly giant block.
+
+---
+
+# 13. HISTORY PAGE
+
+Create a dedicated Viva History page.
+
+Each history card/row should show:
+
+* Project
+* Viva date
+* number of questions
+* status
+* overall score
+* View Result
+
+Support completed and incomplete viva sessions.
+
+---
+
+# 14. LANDING PAGE
+
+Create a polished public landing page.
+
+Hero:
+
+**Ace Your Project Viva With AI**
+
+Supporting text similar to:
+
+"Upload your project report. VivaBot generates questions based on your actual project, evaluates your answers, and shows exactly where you need to improve."
+
+Buttons:
+
+Start Practicing
+Login
+
+Include a simple 3-step section:
+
+1. Upload Your Project
+2. Practice Your Viva
+3. Improve With AI Feedback
+
+Include feature cards for:
+
+Project-Specific Questions
+
+Instant AI Evaluation
+
+Performance Tracking
+
+Viva History
+
+Include a professional footer.
+
+Do not put fake testimonials, fake student counts, fake universities, fake ratings, or fabricated statistics.
+
+---
+
+# 15. UI / DESIGN DIRECTION
+
+The visual quality matters.
+
+Design this like a polished modern EdTech SaaS product, not like a default Django tutorial.
+
+Use a clean light theme.
+
+Suggested visual direction:
+
+* mostly white/light background
+* dark readable text
+* blue/indigo/purple accent colors
+* subtle gradients only where appropriate
+* rounded cards
+* subtle shadows
+* good whitespace
+* consistent border radius
+* clean modern typography
+* professional icons where useful
+* smooth hover states
+* responsive layout
+
+Do NOT make it:
+
+* neon
+* overly animated
+* childish
+* filled with gradients everywhere
+* cluttered
+* glassmorphism-heavy
+* generic bootstrap-looking
+* obviously AI-generated
+
+Use CSS variables/design tokens for consistent:
+
+* colors
+* spacing
+* border radius
+* shadows
+
+Make the application fully responsive.
+
+It should work properly on:
+
+* desktop
+* laptop
+* tablet
+* mobile
+
+Use accessible form labels, readable contrast, keyboard-friendly controls, and visible validation errors.
+
+---
+
+# 16. LOADING AND ERROR STATES
+
+AI calls can take time.
+
+While Gemini generates questions, show a proper loading state such as:
+
+"Analyzing your project and preparing your viva..."
+
+While evaluating:
+
+"Evaluating your answer..."
+
+Disable buttons during active requests to prevent duplicate requests.
+
+Handle:
+
+* unsupported upload
+* empty file
+* failed PDF extraction
+* missing API key
+* Gemini API failure
+* malformed Gemini response
+* timeout
+* database error
+* unauthorized resource access
+* blank answers
+* deleted/missing projects
+
+Show useful user-friendly messages instead of raw stack traces.
+
+---
+
+# 17. DJANGO REST FRAMEWORK API
+
+Implement a proper REST API alongside the web application.
+
+Potential routes:
+
+GET /api/projects/
+POST /api/projects/
+GET /api/projects/<id>/
+PATCH /api/projects/<id>/
+DELETE /api/projects/<id>/
+
+POST /api/projects/<id>/vivas/
+
+GET /api/vivas/
+GET /api/vivas/<id>/
+
+POST /api/vivas/<id>/generate-questions/
+
+POST /api/questions/<id>/answer/
+
+GET /api/vivas/<id>/result/
+
+You may improve these routes if you have a cleaner REST design.
+
+Use:
+
+* serializers
+* validation
+* DRF permissions
+* correct HTTP status codes
+* correct ownership filtering
+* useful JSON errors
+
+Do not expose another user's records through APIs.
+
+Do not put everything into one enormous API view.
+
+---
+
+# 18. SECURITY
+
+Apply basic real-world security.
+
+Important requirements:
+
+* API key only server-side
+* .env ignored by Git
+* CSRF protection
+* Django password hashing
+* authentication required for private routes
+* owner-based object permissions
+* file type validation
+* file size validation
+* escape user-generated output appropriately
+* do not trust frontend validation alone
+* avoid exposing stack traces in production
+* avoid IDOR vulnerabilities
+* never use eval() on uploaded/user/AI content
+* never execute uploaded files
+* validate Gemini JSON before using it
+
+Do not disable security features merely to get the application working.
+
+---
+
+# 19. ADMIN PANEL
+
+Configure Django Admin for useful development/demo management.
+
+Register:
+
+Project
+VivaSession
+Question
+Answer
+Evaluation
+
+Provide useful:
+
+list_display
+search_fields
+list_filter
+
+Do not expose API secrets inside admin.
+
+---
+
+# 20. TESTING
+
+Do not assume the application works because it starts.
+
+Test the main workflow:
+
+Register
+→ Login
+→ Create Project
+→ Upload Report
+→ Text Extraction
+→ Generate Viva
+→ Display Question
+→ Submit Answer
+→ AI Evaluation
+→ Next Question
+→ Complete Viva
+→ Results
+→ History
+
+Also test:
+
+User A cannot access User B's project.
+
+User A cannot access User B's viva API.
+
+Blank answers are rejected.
+
+Invalid uploads are rejected.
+
+Missing resources return proper 404 responses.
+
+Missing API key produces a controlled error.
+
+Gemini response errors do not destroy existing data.
+
+Refresh during a viva does not lose progress.
+
+Run Django system checks and migrations.
+
+Fix errors you discover.
+
+---
+
+# 21. DEMO WITHOUT BREAKING REAL AI
+
+The real application must use Gemini.
+
+However, if an API key has not yet been configured during initial testing, you may create a clearly marked development-only fallback/mock AI mode so that the UI workflow can be tested.
+
+Requirements:
+
+* it must be obviously marked development-only
+* it must NOT silently pretend to be Gemini
+* production behavior should use the real Gemini API
+* switching should be done using an environment setting
+
+Do not make mock AI the normal production behavior.
+
+---
+
+# 22. README
+
+Create a useful README.md containing:
+
+* project overview
+* main features
+* technology stack
+* architecture
+* setup instructions
+* virtual environment instructions
+* dependency installation
+* migrations
+* creating superuser
+* environment variables
+* running the development server
+* configuring Gemini
+* supported upload formats
+* important routes/API endpoints
+
+Do not place an actual API key inside README.
+
+---
+
+# 23. ENVIRONMENT CONFIGURATION
+
+Create an example such as:
+
+DEBUG=True
+DJANGO_SECRET_KEY=change-me
+GOOGLE_API_KEY=your-google-api-key
+GEMINI_MODEL=your-supported-gemini-model
+
+Use environment variables correctly in settings/services.
+
+Generate a safe local development SECRET_KEY if necessary, but make production configuration environment-driven.
+
+---
+
+# 24. CODE QUALITY
+
+Write clean, understandable code.
+
+Use:
+
+* descriptive variable names
+* small functions
+* Django conventions
+* service functions for business logic
+* serializers/forms for validation where appropriate
+* comments only where they add actual value
+
+Avoid:
+
+* duplicate code
+* giant functions
+* giant views.py files
+* hardcoded URLs everywhere
+* hardcoded API secrets
+* excessive abstractions
+* unnecessary dependencies
+
+This is a college project, but it should resemble a real software product.
+
+The AI is only one component of the system.
+
+The technical value should also come from:
+
+* Django architecture
+* REST APIs
+* relational database design
+* authentication
+* authorization
+* file handling
+* document processing
+* API integration
+* persistent sessions
+* state management
+* validation
+* security
+* error handling
+
+---
+
+# 25. IMPORTANT IMPLEMENTATION RULES
+
+Before coding, inspect the architecture and create a concise implementation plan internally.
+
+Then actually build the application.
+
+Do NOT stop after giving me a plan.
+
+Do NOT replace Django with another backend.
+
+Do NOT replace SQLite with another database for the initial version.
+
+Do NOT build only static pages.
+
+Do NOT create fake buttons.
+
+Every major button should actually work.
+
+Do NOT leave core functionality as TODO comments.
+
+Do NOT invent project statistics or fake content.
+
+Do NOT expose secrets.
+
+Keep the project straightforward enough for a student to understand later.
+
+If a dependency or Gemini SDK syntax has changed, use the currently supported implementation rather than outdated examples.
+
+After implementing each major area, verify that existing functionality still works.
+
+---
+
+# 26. FINAL ACCEPTANCE CRITERIA
+
+I should be able to:
+
+1. Open the website.
+2. Register.
+3. Log in.
+4. Reach my dashboard.
+5. Create a project.
+6. Upload a project PDF/report.
+7. Have its text extracted.
+8. Click Generate Viva.
+9. Have Gemini generate project-specific questions.
+10. See one question at a time.
+11. Type and submit my answer.
+12. Receive an AI-generated score and useful feedback.
+13. Continue through all questions.
+14. Complete the viva.
+15. See an overall result.
+16. Return later and view the result in History.
+17. Start another viva for the same project.
+18. Never see another user's private data.
+19. Use the site properly on mobile and desktop.
+
+If any of these are not working, the application is not complete.
+
+Once implementation is complete:
+
+* run migrations
+* run Django checks
+* test the important user journeys
+* fix errors
+* remove obvious dead code
+* ensure static/media files work
+* verify responsive layout
+* provide clear instructions for adding GOOGLE_API_KEY
+* tell me exactly how to run the application
+* summarize the final architecture and important files
+
+Build VivaBot as a polished, functional, demonstrable project—not merely an AI prototype.
