@@ -58,16 +58,16 @@ Report uploads are text-extracted on the server and private to the owning accoun
 
 The API uses Django session authentication and CSRF protection. Private routes require a signed-in user and scope project, viva, and question queries to that user's records.
 
-- `GET /api/projects/`
-- `POST /api/projects/`
-- `GET /api/projects/<id>/`
-- `PATCH /api/projects/<id>/`
-- `DELETE /api/projects/<id>/`
-- `POST /api/projects/<id>/vivas/` — generate and save a new report-specific viva
-- `GET /api/vivas/`
-- `GET /api/vivas/<id>/`
-- `GET /api/vivas/<id>/result/` — completed sessions only
-- `POST /api/questions/<id>/answer/`
+- `GET /vivabot-api/projects/`
+- `POST /vivabot-api/projects/`
+- `GET /vivabot-api/projects/<id>/`
+- `PATCH /vivabot-api/projects/<id>/`
+- `DELETE /vivabot-api/projects/<id>/`
+- `POST /vivabot-api/projects/<id>/vivas/` — generate and save a new report-specific viva
+- `GET /vivabot-api/vivas/`
+- `GET /vivabot-api/vivas/<id>/`
+- `GET /vivabot-api/vivas/<id>/result/` — completed sessions only
+- `POST /vivabot-api/questions/<id>/answer/`
 
 Project creation expects multipart form data with `title`, `description`, and `report_file`; `technologies_used` is optional. Answer submission expects JSON such as `{"answer_text":"..."}`.
 

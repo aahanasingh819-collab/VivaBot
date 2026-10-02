@@ -98,15 +98,15 @@ class OwnershipApiTests(TestCase):
 
     def test_api_hides_another_users_project_and_viva(self):
         self.client.force_login(self.other)
-        project_response = self.client.get(f"/api/projects/{self.project.pk}/")
-        viva_response = self.client.get(f"/api/vivas/{self.session.pk}/")
+        project_response = self.client.get(f"/vivabot-api/projects/{self.project.pk}/")
+        viva_response = self.client.get(f"/vivabot-api/vivas/{self.session.pk}/")
         self.assertEqual(project_response.status_code, 404)
         self.assertEqual(viva_response.status_code, 404)
 
     def test_api_project_list_only_returns_the_signed_in_users_projects(self):
         make_project(self.other, "Other student's app")
         self.client.force_login(self.owner)
-        response = self.client.get("/api/projects/")
+        response = self.client.get("/vivabot-api/projects/")
         self.assertEqual(response.status_code, 200)
         titles = [item["title"] for item in response.json()["results"]]
         self.assertEqual(titles, [self.project.title])
@@ -114,7 +114,7 @@ class OwnershipApiTests(TestCase):
     def test_api_rejects_blank_answers(self):
         self.client.force_login(self.owner)
         response = self.client.post(
-            f"/api/questions/{self.question.pk}/answer/",
+            f"/vivabot-api/questions/{self.question.pk}/answer/",
             {"answer_text": "   "},
         )
         self.assertEqual(response.status_code, 400)
@@ -128,7 +128,7 @@ class OwnershipApiTests(TestCase):
             "viva.services.viva_service.evaluate_answer", return_value=EVALUATION
         ):
             response = self.client.post(
-                f"/api/questions/{self.question.pk}/answer/",
+                f"/vivabot-api/questions/{self.question.pk}/answer/",
                 data=json.dumps({"answer_text": "Each request receives a unique number."}),
                 content_type="application/json",
             )
@@ -144,27 +144,27 @@ class OwnershipApiTests(TestCase):
         self.client.force_login(self.owner)
         with patch("api.views.generate_viva", return_value=self.session):
             response = self.client.post(
-                f"/api/projects/{self.project.pk}/vivas/",
+                f"/vivabot-api/projects/{self.project.pk}/vivas/",
                 data=json.dumps({"difficulty": "medium"}),
                 content_type="application/json",
             )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["id"], self.session.pk)
         self.assertEqual(len(response.json()["questions"]), 1)
-        incomplete_result = self.client.get(f"/api/vivas/{self.session.pk}/result/")
+        incomplete_result = self.client.get(f"/vivabot-api/vivas/{self.session.pk}/result/")
         self.assertEqual(incomplete_result.status_code, 409)
 
         self.session.status = VivaSession.Status.COMPLETED
         self.session.overall_score = Decimal("8.00")
         self.session.save()
-        completed_result = self.client.get(f"/api/vivas/{self.session.pk}/result/")
+        completed_result = self.client.get(f"/vivabot-api/vivas/{self.session.pk}/result/")
         self.assertEqual(completed_result.status_code, 200)
         self.assertEqual(completed_result.json()["overall_score"], "8.00")
 
     def test_api_answer_for_foreign_question_is_not_found(self):
         self.client.force_login(self.other)
         response = self.client.post(
-            f"/api/questions/{self.question.pk}/answer/",
+            f"/vivabot-api/questions/{self.question.pk}/answer/",
             {"answer_text": "A reasoned response."},
         )
         self.assertEqual(response.status_code, 404)

@@ -6,5 +6,5 @@ urlpatterns = [
     path("", include("users.urls")),
     path("", include("projects.urls")),
     path("", include("viva.urls")),
-    path("api/", include("api.urls")),
+    path("vivabot-api/", include("api.urls")),
 ]

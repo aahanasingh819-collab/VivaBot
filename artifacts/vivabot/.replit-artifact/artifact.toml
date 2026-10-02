@@ -8,20 +8,20 @@ router = "path"
 
 [[services]]
 name = "web"
-paths = [ "/" ]
+paths = ["/"]
 localPort = 25608
 
 [services.development]
-run = "pnpm --filter @workspace/vivabot run dev"
+run = "cd ../.. && python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:$PORT"
 
-[services.production]
-build = [ "pnpm", "--filter", "@workspace/vivabot", "run", "build" ]
-serve = "static"
-publicDir = "artifacts/vivabot/dist/public"
+[services.production.build]
+args = ["python", "manage.py", "collectstatic", "--noinput"]
 
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+[services.production.run]
+args = ["python", "-m", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:25608"]
+
+[services.production.run.env]
+PORT = "25608"
 
 [services.env]
 PORT = "25608"
