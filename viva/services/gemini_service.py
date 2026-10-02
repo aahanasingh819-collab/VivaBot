@@ -44,17 +44,18 @@ def _client():
 
 def _json_response(prompt):
     try:
-        response = _client().models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.35,
-                automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                    disable=True
+        with _client() as client:
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.35,
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                        disable=True
+                    ),
                 ),
-            ),
-        )
+            )
     except GeminiConfigurationError:
         raise
     except Exception as exc:
