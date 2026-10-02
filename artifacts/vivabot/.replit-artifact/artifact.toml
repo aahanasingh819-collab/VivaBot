@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "VivaBot"
+description = "A Django-powered viva practice app for students. The registered web service routes to the existing Django templates and REST API; all application behavior remains in Python, Django, and vanilla JavaScript."
+version = "1.0.0"
+id = "artifacts/vivabot"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25608
+
+[services.development]
+run = "pnpm --filter @workspace/vivabot run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/vivabot", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/vivabot/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25608"
+BASE_PATH = "/"
