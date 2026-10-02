@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -26,6 +27,7 @@ def _host(value):
     return value.split("://", 1)[-1].split("/", 1)[0].strip()
 
 
+_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
 _hosted_hosts = list(
     dict.fromkeys(
         _host(item)
@@ -33,16 +35,18 @@ _hosted_hosts = list(
             *_csv_env("ALLOWED_HOSTS"),
             *_csv_env("REPLIT_DOMAINS"),
             os.environ.get("REPLIT_DEV_DOMAIN", ""),
+            _render_host,
         )
         if item
     )
 )
 ALLOWED_HOSTS = list(dict.fromkeys(["localhost", "127.0.0.1", *_hosted_hosts]))
+_csrf_hosts = [_render_host] if _render_host else []
 CSRF_TRUSTED_ORIGINS = list(
     dict.fromkeys(
         [
             f"https://{host}"
-            for host in _hosted_hosts
+            for host in (*_hosted_hosts, *_csrf_hosts)
             if "." in host and not host.startswith("*")
         ]
     )
@@ -98,6 +102,15 @@ DATABASES = {
         "OPTIONS": {"timeout": 20},
     }
 }
+
+# Override with DATABASE_URL if provided (e.g., Neon PostgreSQL on Render)
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    DATABASES["default"] = dj_database_url.config(
+        default=_database_url,
+        conn_max_age=600,
+        ssl_require=True,
+    )
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
