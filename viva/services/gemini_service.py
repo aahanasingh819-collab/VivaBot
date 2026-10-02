@@ -4,6 +4,7 @@ import re
 
 from django.conf import settings
 from google import genai
+from google.genai import types
 
 from viva.models import Question
 
@@ -46,15 +47,22 @@ def _json_response(prompt):
         response = _client().models.generate_content(
             model=settings.GEMINI_MODEL,
             contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "temperature": 0.35,
-            },
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.35,
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                    disable=True
+                ),
+            ),
         )
     except GeminiConfigurationError:
         raise
     except Exception as exc:
-        logger.warning("Gemini request failed: %s", type(exc).__name__)
+        logger.exception(
+            "Gemini request failed: %s: %s",
+            type(exc).__name__,
+            exc,
+        )
         raise GeminiServiceError(
             "Gemini could not complete this request. Please try again in a moment."
         ) from exc
